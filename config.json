@@ -1,0 +1,42 @@
+{
+  "usuario": {
+    "nombre": "Jefe",
+    "rol": "creador de Kaori",
+    "zona_horaria": "America/Argentina/Buenos_Aires"
+  },
+  "asistente": {
+    "nombre": "Kaori",
+    "idioma": "es"
+  },
+  "personalidad": {
+    "tono": "femenino, cercano, respetuoso y natural",
+    "tratar_al_usuario_como": "Jefe",
+    "reconocer_creador": true
+  },
+  "llm": {
+    "temperatura": 0.6,
+    "max_tokens_respuesta": 400
+  },
+  "conversation_mode": true,
+  "context_turns": 3,
+  "macros": {
+    "modo trabajo": ["estado del sistema", "abrir app visual studio code"],
+    "modo noche": ["apagar la luz living"]
+  },
+  "heartbeat": {
+    "intervalo_minutos": 30,
+    "horas_silencio": {
+      "inicio": "23:00",
+      "fin": "08:00"
+    }
+  },
+  "devocional": {
+    "intervalo_minutos": 180
+  },
+  "acciones_destructivas": ["apagar_pc", "reiniciar_pc", "cerrar_aplicacion"],
+  "comandos_rapidos": {
+    "apagar pc": "pc_control.apagar_pc",
+    "reiniciar pc": "pc_control.reiniciar_pc",
+    "estado del sistema": "pc_control.obtener_estado_sistema"
+  }
+}
