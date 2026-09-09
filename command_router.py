@@ -12,6 +12,39 @@ from skills.personality_skills import skill_chiste, skill_estado_animo, skill_qu
 
 _PENDIENTES: dict[str, str] = {}
 
+MENU_AYUDA = """🤖 Kaori está lista
+
+Puedo ejecutar la mayoría de las acciones con frases normales:
+
+🌤️ CLIMA
+• `clima en Madrid`
+• `pronóstico en Ciudad de México`
+
+🍽️ COMIDA Y BEBIDAS
+• `receta aleatoria`
+• `receta de pasta`
+• `qué puedo cocinar con pollo`
+• `cóctel aleatorio`
+
+🎵 SPOTIFY
+• `spotify música de Daft Punk`
+• `spotify pausa` / `spotify siguiente`
+
+🔎 BÚSQUEDAS Y DATOS
+• `busca en internet ...`
+• `noticias de tecnología`
+• `dato curioso`
+• `información de vuelos ...`
+• `valida este teléfono ...`
+
+🧰 SISTEMA
+• `estado del sistema`
+• `abrir aplicación Chrome`
+• `enciende la luz sala`
+
+También puedes escribir `/menu`, `/clima`, `/receta`, `/receta_aleatoria` o `/voz`.
+No necesitas repetir una solicitud: si falta un detalle opcional, uso un valor razonable y ejecuto la acción."""
+
 
 def _ejecutar(nombre: str, texto: str, remitente: str) -> str:
     funcion: Callable = SKILLS[nombre]
@@ -32,10 +65,10 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
     normalizado = texto.lower()
     memory.guardar_mensaje(remitente, "usuario", texto)
 
-    if re.search(r"\b(hola|buenas|buenos días|buenas tardes|buenas noches)\b", normalizado):
+    if normalizado in {"/help", "/ayuda", "/menu", "ayuda", "menú", "menu"} or "qué puedes hacer" in normalizado or "capacidades" in normalizado:
+        respuesta = MENU_AYUDA
+    elif re.search(r"\b(hola|buenas|buenos días|buenas tardes|buenas noches)\b", normalizado):
         respuesta = skill_saludar(remitente=remitente)
-    elif "qué puedes hacer" in normalizado or "capacidades" in normalizado:
-        respuesta = "Puedo consultar APIs de clima, vuelos, teléfonos, IP, recetas, comidas, cócteles, fútbol, imágenes, calendario y Spotify; también controlar lo básico de tu PC y Home Assistant."
     elif "chiste" in normalizado:
         respuesta = skill_chiste(remitente=remitente)
     elif "cómo estás" in normalizado or "estado de ánimo" in normalizado:
@@ -64,7 +97,7 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
         respuesta = _ejecutar("pronostico", _ciudad(texto), remitente)
     elif re.search(r"\bclima\b|\btiempo\b", normalizado):
         respuesta = _ejecutar("clima", _ciudad(texto), remitente)
-    elif "vuelo " in normalizado:
+    elif re.search(r"\bvuelos?\b", normalizado):
         respuesta = _ejecutar("vuelo", texto, remitente)
     elif "genera" in normalizado and "imagen" in normalizado:
         respuesta = _ejecutar("imagen", texto, remitente)
@@ -78,10 +111,14 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
         respuesta = _ejecutar("spotify_buscar", re.sub(r"(?i).*spotify", "", texto).strip(), remitente)
     elif "dato curioso" in normalizado or "dato fun" in normalizado:
         respuesta = _ejecutar("dato_curioso", texto, remitente)
+    elif re.search(r"\b(cóctel|coctel)\b", normalizado) and any(x in normalizado for x in ("aleatorio", "random", "sorpresa", "dame uno")):
+        respuesta = _ejecutar("coctel_random", texto, remitente)
     elif "cóctel" in normalizado or "coctel" in normalizado:
         respuesta = _ejecutar("coctel", texto, remitente)
+    elif re.search(r"\b(receta|comida|plato)\b", normalizado) and any(x in normalizado for x in ("aleatoria", "aleatorio", "random", "sorpresa", "qué cocino", "que cocino", "dame una")):
+        respuesta = _ejecutar("comida_random", "", remitente)
     elif "receta" in normalizado:
-        respuesta = _ejecutar("receta", texto, remitente)
+        respuesta = _ejecutar("comida", texto, remitente)
     elif "comida" in normalizado or "meal" in normalizado:
         respuesta = _ejecutar("comida", texto, remitente)
     elif "fútbol" in normalizado or "futbol" in normalizado:
@@ -90,8 +127,8 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
         respuesta = _ejecutar("noticias", texto, remitente)
     elif "biblia" in normalizado or "versículo" in normalizado or "versiculo" in normalizado:
         respuesta = _ejecutar("biblia", texto, remitente)
-    elif "buscar en internet" in normalizado or "busca en la web" in normalizado:
-        respuesta = _ejecutar("buscar_web", texto, remitente)
+    elif "buscar en internet" in normalizado or "busca en la web" in normalizado or re.search(r"\b(busca|buscar)\b", normalizado):
+        respuesta = _ejecutar("buscar_web", re.sub(r"(?i)^(?:busca|buscar)\s*", "", texto), remitente)
     elif "cotización" in normalizado or "cotizacion" in normalizado or "acciones de" in normalizado:
         respuesta = _ejecutar("cotizacion", texto, remitente)
     elif "mapa" in normalizado or "geocodifica" in normalizado:
@@ -134,7 +171,7 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
         entidad = texto.split("luz", 1)[-1].strip(" .")
         respuesta = domotics.encender_luz(entidad) if "encend" in normalizado else domotics.apagar_luz(entidad)
     else:
-        respuesta = "No reconocí ese comando. Probá pedir clima, una receta, una imagen, Spotify o 'ayuda'."
+        respuesta = "No reconocí esa solicitud todavía. Escribí *menu* para ver ejemplos o probá: `clima en Madrid`, `receta aleatoria`, `busca en internet ...` o `dato curioso`."
 
     memory.guardar_mensaje("jarvis", "asistente", respuesta)
     estado_global.actualizar("tarea_completada")
