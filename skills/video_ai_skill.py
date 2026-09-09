@@ -12,6 +12,7 @@ import requests
 from dotenv import load_dotenv
 
 import whatsapp_bridge
+import telegram_bridge
 
 load_dotenv()
 logger = logging.getLogger("jarvis.skills.video_ai")
@@ -81,9 +82,28 @@ def _generar_y_enviar(prompt: str, remitente: str) -> None:
         url_estado = datos.get("status_url")
         url_respuesta = datos.get("response_url")
         video = _esperar_video(url_estado, url_respuesta) if url_estado and url_respuesta else None
-        if video and whatsapp_bridge.descargar_y_enviar_media(remitente, video, mediatype="video", caption=f"Video IA: {prompt}"):
+        if video and remitente.startswith("telegram:"):
+            enviado = telegram_bridge.enviar_media(
+                video, "video", f"Video IA: {prompt}", remitente.removeprefix("telegram:")
+            )
+        elif video:
+            enviado = whatsapp_bridge.descargar_y_enviar_media(
+                remitente, video, mediatype="video", caption=f"Video IA: {prompt}"
+            )
+            if os.getenv("TELEGRAM_CHAT_ID", "").strip():
+                enviado = telegram_bridge.enviar_media(video, "video", f"Video IA: {prompt}") or enviado
+        else:
+            enviado = False
+        if enviado:
             return
-        whatsapp_bridge.enviar_mensaje_texto(remitente, "No pude completar el video IA. Revisá el estado o formato de respuesta del proveedor.")
+        if remitente.startswith("telegram:"):
+            telegram_bridge.enviar_texto(
+                "No pude completar el video IA. Revisá el estado o formato de respuesta del proveedor.",
+                remitente.removeprefix("telegram:"),
+            )
+        else:
+            whatsapp_bridge.enviar_mensaje_texto(remitente, "No pude completar el video IA. Revisá el estado o formato de respuesta del proveedor.")
+            telegram_bridge.enviar_texto("No pude completar el video IA. Revisá el estado o formato de respuesta del proveedor.")
     except requests.HTTPError as error:
         codigo = error.response.status_code if error.response is not None else 0
         logger.warning("Error HTTP generando video IA: %s", error)

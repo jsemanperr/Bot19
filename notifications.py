@@ -8,6 +8,7 @@ import requests
 from dotenv import load_dotenv
 
 import whatsapp_bridge
+import telegram_bridge
 
 load_dotenv()
 logger = logging.getLogger("jarvis.notifications")
@@ -19,21 +20,7 @@ def enviar_whatsapp(mensaje: str) -> bool:
 
 
 def enviar_telegram(mensaje: str) -> bool:
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
-    if not token or not chat_id:
-        return False
-    try:
-        response = requests.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": mensaje},
-            timeout=15,
-        )
-        response.raise_for_status()
-        return True
-    except requests.RequestException as error:
-        logger.warning("Telegram no disponible: %s", error)
-        return False
+    return telegram_bridge.enviar_texto(mensaje)
 
 
 def enviar_discord(mensaje: str) -> bool:

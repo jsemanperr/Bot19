@@ -13,6 +13,7 @@ import requests
 from dotenv import load_dotenv
 
 import whatsapp_bridge
+import telegram_bridge
 
 load_dotenv()
 TIMEOUT_SEGUNDOS = int(os.getenv("IMAGE_AI_TIMEOUT", "90"))
@@ -91,9 +92,14 @@ def editar_imagen_agnes(image_bytes: bytes, prompt: str) -> bytes:
 def _enviar_o_devolver(ruta: str, remitente: str, caption: str) -> str:
     if remitente:
         try:
-            if whatsapp_bridge.enviar_media(remitente, ruta, mediatype="image", caption=caption):
-                return "Listo, te envié la imagen."
-            return "La imagen se creó, pero no pude enviarla por WhatsApp."
+            enviado = (
+                telegram_bridge.enviar_media(ruta, "photo", caption, remitente.removeprefix("telegram:"))
+                if remitente.startswith("telegram:")
+                else whatsapp_bridge.enviar_media(remitente, ruta, mediatype="image", caption=caption)
+            )
+            if not remitente.startswith("telegram:") and os.getenv("TELEGRAM_CHAT_ID", "").strip():
+                enviado = telegram_bridge.enviar_media(ruta, "photo", caption) or enviado
+            return "Listo, te envié la imagen." if enviado else "La imagen se creó, pero no pude enviarla."
         finally:
             Path(ruta).unlink(missing_ok=True)
     datos_b64 = base64.b64encode(Path(ruta).read_bytes()).decode("ascii")

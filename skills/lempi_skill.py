@@ -2,10 +2,12 @@
 """Comandos de WhatsApp para el cliente de Lempi API."""
 
 import json
+import os
 import re
 
 import lempi_api
 import whatsapp_bridge
+import telegram_bridge
 
 
 AYUDA = (
@@ -55,7 +57,10 @@ def usar_lempi(comando: str, remitente: str = "") -> str:
             consulta = re.sub(r"^(busca|buscar)?\s*imagen\s+", "", texto, flags=re.I)
             resultado = lempi_api.buscar_imagen(consulta)
             imagen = _primer_url(resultado)
-            if imagen and whatsapp_bridge.descargar_y_enviar_media(remitente, imagen, caption=f"Imagen: {consulta}"):
+            enviado = imagen and telegram_bridge.enviar_media(imagen, "photo", f"Imagen: {consulta}", remitente.removeprefix("telegram:")) if remitente.startswith("telegram:") else imagen and whatsapp_bridge.descargar_y_enviar_media(remitente, imagen, caption=f"Imagen: {consulta}")
+            if imagen and not remitente.startswith("telegram:") and os.getenv("TELEGRAM_CHAT_ID", "").strip():
+                enviado = telegram_bridge.enviar_media(imagen, "photo", f"Imagen: {consulta}") or enviado
+            if enviado:
                 return f"Te envié una imagen de {consulta}."
             return "No pude descargar la imagen solicitada."
         if bajo.startswith(("sticker ", "stickers ")):
@@ -78,7 +83,10 @@ def usar_lempi(comando: str, remitente: str = "") -> str:
                 return "Decime que imagen queres generar, por ejemplo: genera imagen un atardecer en Oaxaca."
             resultado = lempi_api.generar_imagen(prompt=consulta, size="1024x1024")
             imagen = _primer_url(resultado, ("image", "url", "media", "download"))
-            if imagen and whatsapp_bridge.descargar_y_enviar_media(remitente, imagen, caption=f"Imagen IA: {consulta}"):
+            enviado = imagen and telegram_bridge.enviar_media(imagen, "photo", f"Imagen IA: {consulta}", remitente.removeprefix("telegram:")) if remitente.startswith("telegram:") else imagen and whatsapp_bridge.descargar_y_enviar_media(remitente, imagen, caption=f"Imagen IA: {consulta}")
+            if imagen and not remitente.startswith("telegram:") and os.getenv("TELEGRAM_CHAT_ID", "").strip():
+                enviado = telegram_bridge.enviar_media(imagen, "photo", f"Imagen IA: {consulta}") or enviado
+            if enviado:
                 return "Listo, te envié la imagen generada."
             return "La imagen se generó, pero no pude descargarla para enviártela."
         if bajo.startswith("emojimix "):
