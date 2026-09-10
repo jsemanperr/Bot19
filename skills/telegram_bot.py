@@ -32,6 +32,7 @@ except ImportError:
     Conflict = Exception
 
 import command_router
+import diagnostics
 import transcription
 import voice
 
@@ -167,6 +168,13 @@ async def _comando_buscar(update: "Update", context: "ContextTypes.DEFAULT_TYPE"
     await _enviar_respuesta(update, respuesta)
 
 
+async def _comando_diagnostico(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> None:
+    await update.message.reply_text("🧪 Ejecutando prueba segura de skills. Puede tardar unos minutos...")
+    informe = await asyncio.to_thread(diagnostics.enviar_diagnostico)
+    for inicio in range(0, len(informe), 3900):
+        await update.message.reply_text(informe[inicio:inicio + 3900])
+
+
 async def _comando_voz(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> None:
     if not TELEGRAM_AUDIO_ENABLED:
         await update.message.reply_text(
@@ -224,6 +232,7 @@ def iniciar_bot_telegram() -> None:
                 ("voz", "Probar respuesta de voz"),
                 ("audio", "Probar respuesta de voz"),
                 ("ejemplos", "Ver ejemplos de uso"),
+                ("diagnostico", "Probar las skills configuradas"),
                 ("help", "Ayuda rápida"),
             ])
 
@@ -235,6 +244,7 @@ def iniciar_bot_telegram() -> None:
         aplicacion.add_handler(CommandHandler(["receta", "cocina"], _comando_receta))
         aplicacion.add_handler(CommandHandler("imagen", _comando_imagen))
         aplicacion.add_handler(CommandHandler(["buscar", "busqueda"], _comando_buscar))
+        aplicacion.add_handler(CommandHandler(["diagnostico", "diagnóstico"], _comando_diagnostico))
         aplicacion.add_handler(CommandHandler(["voz", "audio"], _comando_voz))
         aplicacion.add_handler(MessageHandler(filters.VOICE, _manejar_voz))
         aplicacion.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, _manejar_mensaje))

@@ -9,6 +9,7 @@ import memory
 import pc_control
 import telegram_bridge
 import whatsapp_bridge
+import diagnostics
 from neurochemistry import estado_global
 from skills import SKILLS
 from skills.personality_skills import skill_chiste, skill_estado_animo, skill_que_sabes_de_mi, skill_saludar
@@ -51,6 +52,7 @@ COMANDOS RÁPIDOS
 • `/imagen un zorro astronauta`
 • `/buscar noticias de tecnología`
 • `/audio` para probar la voz
+• `/diagnostico` para probar las APIs configuradas
 
 También puedes escribir `/menu`, `/ejemplos`, `/help`, `/voz` o frases normales.
 No necesitas repetir una solicitud: si falta un detalle opcional, uso un valor razonable y ejecuto la acción."""
@@ -94,6 +96,8 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
 
     if normalizado in {"/help", "/ayuda", "/menu", "ayuda", "menú", "menu"} or "qué puedes hacer" in normalizado or "capacidades" in normalizado:
         respuesta = MENU_AYUDA
+    elif normalizado in {"/diagnostico", "/diagnóstico", "diagnóstico", "diagnostico", "probar todas las skills"}:
+        respuesta = diagnostics.enviar_diagnostico()
     elif re.search(r"\b(hola|buenas|buenos días|buenas tardes|buenas noches)\b", normalizado):
         respuesta = skill_saludar(remitente=remitente)
     elif "chiste" in normalizado:
