@@ -45,7 +45,14 @@ Puedo ejecutar la mayoría de las acciones con frases normales:
 • `abrir aplicación Chrome`
 • `enciende la luz sala`
 
-También puedes escribir `/menu`, `/clima`, `/receta`, `/receta_aleatoria` o `/voz`.
+COMANDOS RÁPIDOS
+• `/clima Madrid`
+• `/receta` o `/receta pollo`
+• `/imagen un zorro astronauta`
+• `/buscar noticias de tecnología`
+• `/audio` para probar la voz
+
+También puedes escribir `/menu`, `/ejemplos`, `/help`, `/voz` o frases normales.
 No necesitas repetir una solicitud: si falta un detalle opcional, uso un valor razonable y ejecuto la acción."""
 
 

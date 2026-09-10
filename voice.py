@@ -34,7 +34,6 @@ def _sintetizar_fish_audio(texto: str) -> str | None:
     if not api_key or not voice_id:
         logger.warning("Faltan FISH_AUDIO_API_KEY o FISH_AUDIO_VOICE_ID.")
         return None
-
     formato = os.getenv("FISH_AUDIO_FORMAT", "mp3").lower()
     respuesta = requests.post(
         "https://api.fish.audio/v1/tts",
@@ -62,11 +61,9 @@ def _sintetizar_fish_audio(texto: str) -> str | None:
 
 
 def sintetizar_texto(texto: str) -> str | None:
-    """Genera audio remoto y usa pyttsx3 solo como respaldo local."""
     texto = _preparar_texto_para_voz(texto)
     if not texto:
         return None
-
     load_dotenv(override=True)
     try:
         audio_fish = _sintetizar_fish_audio(texto)
@@ -74,7 +71,6 @@ def sintetizar_texto(texto: str) -> str | None:
             return audio_fish
     except requests.RequestException as error:
         logger.warning("Fish Audio no disponible; se intenta voz local: %s", error)
-
     try:
         motor = pyttsx3.init()
         motor.setProperty("rate", int(os.getenv("VOICE_RATE", "175")))
