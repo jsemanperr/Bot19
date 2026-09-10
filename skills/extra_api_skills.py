@@ -11,9 +11,28 @@ TIMEOUT = 15
 
 
 def _get(url: str, **kwargs) -> dict:
-    response = requests.get(url, timeout=TIMEOUT, **kwargs)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.get(url, timeout=TIMEOUT, **kwargs)
+        response.raise_for_status()
+        datos = response.json()
+    except requests.Timeout as error:
+        raise RuntimeError("La API tardó demasiado en responder.") from error
+    except requests.RequestException as error:
+        raise RuntimeError("No pude contactar la API configurada.") from error
+    except ValueError as error:
+        raise RuntimeError("La API devolvió una respuesta no válida.") from error
+    if not isinstance(datos, dict):
+        raise RuntimeError("La API devolvió un formato no compatible.")
+    return datos
+
+
+def _safe_call(func, valor: str, remitente: str) -> str:
+    try:
+        return func(valor, remitente)
+    except RuntimeError as error:
+        return f"⚠️ {error}"
+    except (requests.RequestException, ValueError) as error:
+        return f"⚠️ No pude completar la consulta: {error}"
 
 
 def buscar_web(consulta: str, remitente: str = "") -> str:
@@ -91,24 +110,24 @@ def consultar_dominio_securitytrails(dominio: str, remitente: str = "") -> str:
 
 
 def skill_buscar_web(comando: str, remitente: str = "") -> str:
-    return buscar_web(comando, remitente)
+    return _safe_call(buscar_web, comando, remitente)
 
 
 def skill_biblia(comando: str, remitente: str = "") -> str:
-    return consultar_biblia(comando, remitente)
+    return _safe_call(consultar_biblia, comando, remitente)
 
 
 def skill_cotizacion(comando: str, remitente: str = "") -> str:
-    return consultar_cotizacion(comando, remitente)
+    return _safe_call(consultar_cotizacion, comando, remitente)
 
 
 def skill_geocodificar(comando: str, remitente: str = "") -> str:
-    return geocodificar_direccion(comando, remitente)
+    return _safe_call(geocodificar_direccion, comando, remitente)
 
 
 def skill_hibp(comando: str, remitente: str = "") -> str:
-    return verificar_filtracion(comando, remitente)
+    return _safe_call(verificar_filtracion, comando, remitente)
 
 
 def skill_securitytrails(comando: str, remitente: str = "") -> str:
-    return consultar_dominio_securitytrails(comando, remitente)
+    return _safe_call(consultar_dominio_securitytrails, comando, remitente)
