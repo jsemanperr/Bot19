@@ -1,11 +1,14 @@
 """Router pequeno y explicito para JARVIS-LITE."""
 
+import os
 import re
 from typing import Callable
 
 import domotics
 import memory
 import pc_control
+import telegram_bridge
+import whatsapp_bridge
 from neurochemistry import estado_global
 from skills import SKILLS
 from skills.personality_skills import skill_chiste, skill_estado_animo, skill_que_sabes_de_mi, skill_saludar
@@ -51,6 +54,23 @@ def _ejecutar(nombre: str, texto: str, remitente: str) -> str:
     if nombre in {"clima", "pronostico", "calidad_aire"}:
         return funcion(texto, remitente)
     return funcion(texto, remitente)
+
+
+def _difundir_respuesta(respuesta: str, remitente: str) -> None:
+    """Entrega el texto al otro canal sin duplicar el mensaje ya respondido."""
+    if os.getenv("BROADCAST_RESPONSES", "true").lower() != "true":
+        return
+    if remitente.startswith("telegram:"):
+        numero = os.getenv("USER_WHATSAPP_NUMBER", "").strip()
+        if numero:
+            whatsapp_bridge.enviar_mensaje_texto(numero, respuesta)
+    elif remitente and remitente != "local":
+        telegram_bridge.enviar_texto(respuesta)
+    else:
+        numero = os.getenv("USER_WHATSAPP_NUMBER", "").strip()
+        if numero:
+            whatsapp_bridge.enviar_mensaje_texto(numero, respuesta)
+        telegram_bridge.enviar_texto(respuesta)
 
 
 def _ciudad(texto: str) -> str:
@@ -173,6 +193,7 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
     else:
         respuesta = "No reconocí esa solicitud todavía. Escribí *menu* para ver ejemplos o probá: `clima en Madrid`, `receta aleatoria`, `busca en internet ...` o `dato curioso`."
 
+    _difundir_respuesta(respuesta, remitente)
     memory.guardar_mensaje("jarvis", "asistente", respuesta)
     estado_global.actualizar("tarea_completada")
     return respuesta
