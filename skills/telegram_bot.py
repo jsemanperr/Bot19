@@ -175,6 +175,14 @@ async def _comando_diagnostico(update: "Update", context: "ContextTypes.DEFAULT_
         await update.message.reply_text(informe[inicio:inicio + 3900])
 
 
+async def _comando_pruebas_uso(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> None:
+    chat_id = update.effective_chat.id if update.effective_chat else "desconocido"
+    await update.message.reply_text("🧪 Probando ejemplos de uso reales. Te enviaré el informe a este chat...")
+    informe = await asyncio.to_thread(diagnostics.ejecutar_pruebas_uso, f"telegram:{chat_id}")
+    for inicio in range(0, len(informe), 3900):
+        await update.message.reply_text(informe[inicio:inicio + 3900])
+
+
 async def _comando_voz(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> None:
     if not TELEGRAM_AUDIO_ENABLED:
         await update.message.reply_text(
@@ -233,6 +241,7 @@ def iniciar_bot_telegram() -> None:
                 ("audio", "Probar respuesta de voz"),
                 ("ejemplos", "Ver ejemplos de uso"),
                 ("diagnostico", "Probar las skills configuradas"),
+                ("pruebas_uso", "Probar ejemplos de uso"),
                 ("help", "Ayuda rápida"),
             ])
 
@@ -245,6 +254,7 @@ def iniciar_bot_telegram() -> None:
         aplicacion.add_handler(CommandHandler("imagen", _comando_imagen))
         aplicacion.add_handler(CommandHandler(["buscar", "busqueda"], _comando_buscar))
         aplicacion.add_handler(CommandHandler(["diagnostico", "diagnóstico"], _comando_diagnostico))
+        aplicacion.add_handler(CommandHandler(["pruebas_uso", "pruebas-uso"], _comando_pruebas_uso))
         aplicacion.add_handler(CommandHandler(["voz", "audio"], _comando_voz))
         aplicacion.add_handler(MessageHandler(filters.VOICE, _manejar_voz))
         aplicacion.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, _manejar_mensaje))

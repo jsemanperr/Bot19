@@ -69,6 +69,21 @@ _OMITIDAS = {
 
 _SOLO_REMITENTE = {"comida_random", "coctel_random", "dato_curioso"}
 
+_PRUEBAS_USO: tuple[str, ...] = (
+    "clima en Madrid",
+    "pronóstico en Madrid",
+    "receta aleatoria",
+    "cóctel aleatorio",
+    "dato curioso",
+    "noticias de tecnología",
+    "busca en internet Python",
+    "información de vuelos AA100",
+    "información del país México",
+    "geolocaliza la IP 8.8.8.8",
+    "valida este teléfono +14155552671",
+    "valida este correo test@example.com",
+)
+
 
 def _estado(respuesta: str) -> str:
     texto = (respuesta or "").strip()
@@ -120,3 +135,30 @@ def enviar_diagnostico() -> str:
     resultados = enviar_todos(informe)
     canales = ", ".join(nombre for nombre, enviado in resultados.items() if enviado) or "ningún canal configurado"
     return f"{informe}\n\n📨 Informe enviado a: {canales}."
+
+
+def ejecutar_pruebas_uso(remitente: str = "diagnostico") -> str:
+    """Ejecuta ejemplos seguros pasando por el mismo router que usa el chat."""
+    import command_router
+
+    anterior = os.environ.get("BROADCAST_RESPONSES")
+    os.environ["BROADCAST_RESPONSES"] = "false"
+    lineas = ["🧪 PRUEBAS DE USO REAL", "Cada línea simula un mensaje normal del usuario.", ""]
+    try:
+        for numero, ejemplo in enumerate(_PRUEBAS_USO, 1):
+            inicio = time.monotonic()
+            try:
+                respuesta = command_router.procesar_comando(ejemplo, remitente)
+                resumen = " ".join(str(respuesta).split())
+                if len(resumen) > 220:
+                    resumen = resumen[:217] + "..."
+                lineas.append(f"{numero}. ✅ «{ejemplo}»\n   ↳ {resumen} ({time.monotonic() - inicio:.1f}s)")
+            except Exception as error:
+                lineas.append(f"{numero}. ❌ «{ejemplo}»\n   ↳ {type(error).__name__}: {error}")
+    finally:
+        if anterior is None:
+            os.environ.pop("BROADCAST_RESPONSES", None)
+        else:
+            os.environ["BROADCAST_RESPONSES"] = anterior
+    lineas.extend(["", "⏭️ No se probaron acciones destructivas, privadas o con efectos reales."])
+    return "\n".join(lineas)

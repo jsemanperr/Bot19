@@ -53,6 +53,7 @@ COMANDOS RÁPIDOS
 • `/buscar noticias de tecnología`
 • `/audio` para probar la voz
 • `/diagnostico` para probar las APIs configuradas
+• `/pruebas_uso` para probar ejemplos reales
 
 También puedes escribir `/menu`, `/ejemplos`, `/help`, `/voz` o frases normales.
 No necesitas repetir una solicitud: si falta un detalle opcional, uso un valor razonable y ejecuto la acción."""
@@ -98,6 +99,8 @@ def procesar_comando(texto: str | None, remitente: str = "local") -> str:
         respuesta = MENU_AYUDA
     elif normalizado in {"/diagnostico", "/diagnóstico", "diagnóstico", "diagnostico", "probar todas las skills"}:
         respuesta = diagnostics.enviar_diagnostico()
+    elif normalizado in {"/pruebas_uso", "/pruebas-uso", "pruebas de uso", "probar ejemplos"}:
+        respuesta = diagnostics.ejecutar_pruebas_uso(remitente)
     elif re.search(r"\b(hola|buenas|buenos días|buenas tardes|buenas noches)\b", normalizado):
         respuesta = skill_saludar(remitente=remitente)
     elif "chiste" in normalizado:
